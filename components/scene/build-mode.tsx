@@ -32,6 +32,7 @@ export const BuildMode: React.FC<BuildModeProps> = ({
         height={depth}
         isPlacing={true}
         opacity={0.6} // Make the highlight brick semi-transparent
+        shape="cat"
       />
       <HighlightSquare
         position={[currentBrickPosition[0], 0.01, currentBrickPosition[2]]}

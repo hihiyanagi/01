@@ -6,4 +6,5 @@ export interface BlockProps {
   isPlacing?: boolean
   opacity?: number
   onClick?: () => void
+  shape?: "box" | "cat"
 }

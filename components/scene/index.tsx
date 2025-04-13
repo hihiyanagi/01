@@ -62,6 +62,7 @@ export const Scene: React.FC<SceneProps> = ({
           height={brick.height}
           isPlacing={hoveredBrickIndex === index && interactionMode === "erase"}
           onClick={() => handleBrickClick(index)}
+          shape="cat"
         />
       ))}
 

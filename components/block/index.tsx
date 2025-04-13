@@ -8,6 +8,133 @@ import { Instances, Instance, useTexture } from "@react-three/drei"
 import { BRICK_HEIGHT, LAYER_GAP, STUD_HEIGHT, STUD_RADIUS, STUD_SEGMENTS, TEXTURES } from "@/lib/constants"
 import type { BlockProps } from "./types"
 
+// Define crocodile shape points
+const createCatShape = (scale = 1) => {
+  const shape = new THREE.Shape()
+  
+  // Start from the bottom of the body
+  shape.moveTo(0, -0.4 * scale)
+  
+  // Left side of body (rounded)
+  shape.quadraticCurveTo(-0.3 * scale, -0.4 * scale, -0.5 * scale, -0.2 * scale)
+  
+  // Left side of head
+  shape.quadraticCurveTo(-0.6 * scale, 0, -0.5 * scale, 0.2 * scale)
+  
+  // Top of head (snout)
+  shape.quadraticCurveTo(-0.3 * scale, 0.4 * scale, 0, 0.4 * scale)
+  
+  // Right side of head
+  shape.quadraticCurveTo(0.3 * scale, 0.4 * scale, 0.5 * scale, 0.2 * scale)
+  shape.quadraticCurveTo(0.6 * scale, 0, 0.5 * scale, -0.2 * scale)
+  
+  // Right side of body
+  shape.quadraticCurveTo(0.3 * scale, -0.4 * scale, 0, -0.4 * scale)
+  
+  return shape
+}
+
+// Create facial features
+const createCatFace = (scale = 1) => {
+  const face = new THREE.Group()
+  
+  // Eyes (cute and round)
+  const eyeGeometry = new THREE.CircleGeometry(0.08 * scale, 32)
+  const eyeMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 })
+  
+  // Add white part of the eyes
+  const whiteEyeGeometry = new THREE.CircleGeometry(0.1 * scale, 32)
+  const whiteEyeMaterial = new THREE.MeshBasicMaterial({ color: 0xFFFFFF })
+  
+  // Left eye
+  const leftWhiteEye = new THREE.Mesh(whiteEyeGeometry, whiteEyeMaterial)
+  leftWhiteEye.position.set(-0.25 * scale, 0.2 * scale, 0.01)
+  
+  const leftEye = new THREE.Mesh(eyeGeometry, eyeMaterial)
+  leftEye.position.set(-0.25 * scale, 0.2 * scale, 0.02)
+  
+  // Right eye
+  const rightWhiteEye = new THREE.Mesh(whiteEyeGeometry, whiteEyeMaterial)
+  rightWhiteEye.position.set(0.25 * scale, 0.2 * scale, 0.01)
+  
+  const rightEye = new THREE.Mesh(eyeGeometry, eyeMaterial)
+  rightEye.position.set(0.25 * scale, 0.2 * scale, 0.02)
+  
+  // Add eye highlights
+  const highlightGeometry = new THREE.CircleGeometry(0.03 * scale, 32)
+  const highlightMaterial = new THREE.MeshBasicMaterial({ color: 0xFFFFFF })
+  
+  const leftHighlight = new THREE.Mesh(highlightGeometry, highlightMaterial)
+  leftHighlight.position.set(-0.27 * scale, 0.22 * scale, 0.03)
+  
+  const rightHighlight = new THREE.Mesh(highlightGeometry, highlightMaterial)
+  rightHighlight.position.set(0.23 * scale, 0.22 * scale, 0.03)
+  
+  // Add smile (curved line)
+  const smilePoints = []
+  for(let i = 0; i <= 32; i++) {
+    const angle = (Math.PI * i) / 32
+    smilePoints.push(
+      new THREE.Vector3(
+        Math.cos(angle) * 0.3 * scale,
+        Math.sin(angle) * 0.1 * scale - 0.1 * scale,
+        0.01
+      )
+    )
+  }
+  const smileGeometry = new THREE.BufferGeometry().setFromPoints(smilePoints)
+  const smileMaterial = new THREE.LineBasicMaterial({ color: 0x000000 })
+  const smile = new THREE.Line(smileGeometry, smileMaterial)
+  
+  // Add teeth
+  const toothGeometry = new THREE.CircleGeometry(0.03 * scale, 3) // Triangle for tooth
+  const toothMaterial = new THREE.MeshBasicMaterial({ color: 0xFFFFFF })
+  
+  const teeth = new THREE.Group()
+  // Add 4 teeth
+  const toothPositions = [
+    [-0.2, -0.15],
+    [-0.1, -0.12],
+    [0.1, -0.12],
+    [0.2, -0.15]
+  ]
+  
+  toothPositions.forEach(([x, y]) => {
+    const tooth = new THREE.Mesh(toothGeometry, toothMaterial)
+    tooth.position.set(x * scale, y * scale, 0.02)
+    tooth.rotation.z = Math.PI // Point downward
+    teeth.add(tooth)
+  })
+  
+  // Add spots on body
+  const spotGeometry = new THREE.CircleGeometry(0.02 * scale, 32)
+  const spotMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 })
+  const spots = new THREE.Group()
+  
+  // Spot positions
+  const spotPositions = [
+    [-0.4, 0], [-0.3, 0.1], [-0.2, -0.1],
+    [0.4, 0], [0.3, 0.1], [0.2, -0.1],
+    [0, 0.1], [0.1, 0], [-0.1, 0]
+  ]
+  
+  spotPositions.forEach(([x, y]) => {
+    const spot = new THREE.Mesh(spotGeometry, spotMaterial)
+    spot.position.set(x * scale, y * scale, 0.01)
+    spots.add(spot)
+  })
+  
+  face.add(
+    leftWhiteEye, rightWhiteEye,
+    leftEye, rightEye,
+    leftHighlight, rightHighlight,
+    smile,
+    teeth,
+    spots
+  )
+  return face
+}
+
 export const Block: React.FC<BlockProps> = ({
   color,
   position,
@@ -16,9 +143,25 @@ export const Block: React.FC<BlockProps> = ({
   isPlacing = false,
   opacity = 1,
   onClick,
+  shape = "box",
 }) => {
   const depth = height
-  const blockGeometry = useMemo(() => new THREE.BoxGeometry(width, BRICK_HEIGHT - LAYER_GAP, depth), [width, depth])
+  
+  // Create geometry based on shape
+  const blockGeometry = useMemo(() => {
+    if (shape === "cat") {
+      const extrudeSettings = {
+        depth: BRICK_HEIGHT - LAYER_GAP,
+        bevelEnabled: true,
+        bevelThickness: 0.1,
+        bevelSize: 0.1,
+        bevelSegments: 3
+      }
+      return new THREE.ExtrudeGeometry(createCatShape(0.8), extrudeSettings)
+    }
+    return new THREE.BoxGeometry(width, BRICK_HEIGHT - LAYER_GAP, depth)
+  }, [width, depth, shape])
+
   const studGeometry = useMemo(
     () => new THREE.CylinderGeometry(STUD_RADIUS, STUD_RADIUS, STUD_HEIGHT, STUD_SEGMENTS),
     [],
@@ -39,6 +182,7 @@ export const Block: React.FC<BlockProps> = ({
   const brickRef = useRef<THREE.Mesh>(null)
   const studRef = useRef<THREE.InstancedMesh>(null)
   const groupRef = useRef<THREE.Group>(null)
+  const faceRef = useRef<THREE.Group>(null)
 
   // Determine if this is an erase highlight
   const isEraseHighlight = isPlacing && onClick !== undefined
@@ -123,6 +267,9 @@ export const Block: React.FC<BlockProps> = ({
           opacity={opacity}
         />
       </mesh>
+      {shape === "cat" && (
+        <primitive object={createCatFace(0.8)} ref={faceRef} />
+      )}
       <Instances ref={studRef} geometry={studGeometry} limit={instanceLimit}>
         <meshStandardMaterial
           color={darkenedColor}
