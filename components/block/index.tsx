@@ -4,6 +4,7 @@ import type React from "react"
 import { useRef, useMemo } from "react"
 import * as THREE from "three"
 import { useFrame } from "@react-three/fiber"
+import type { ThreeEvent } from "@react-three/fiber"
 import { Instances, Instance, useTexture } from "@react-three/drei"
 import { BRICK_HEIGHT, LAYER_GAP, STUD_HEIGHT, STUD_RADIUS, STUD_SEGMENTS, TEXTURES } from "@/lib/constants"
 import type { BlockProps } from "./types"
@@ -223,7 +224,7 @@ export const Block: React.FC<BlockProps> = ({
   }, [color, isPlacing, isEraseHighlight])
 
   // Handle click with stopPropagation to ensure the correct block is deleted
-  const handleClick = (e: THREE.ThreeEvent<MouseEvent>) => {
+  const handleClick = (e: ThreeEvent<MouseEvent>) => {
     e.stopPropagation()
     if (onClick) onClick()
   }

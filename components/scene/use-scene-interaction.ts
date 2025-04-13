@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react"
 import * as THREE from "three"
-import { useFrame, useThree } from "@react-three/fiber"
+import { useFrame, useThree, type ThreeEvent } from "@react-three/fiber"
 import { GRID_SIZE, BRICK_HEIGHT, LAYER_GAP, GROUND_HEIGHT } from "@/lib/constants"
 import type { Brick } from "@/components/v0-blocks/events"
 
@@ -227,7 +227,7 @@ export function useSceneInteraction({
     }
   })
 
-  const handleClick = (event: THREE.MouseEvent) => {
+  const handleClick = (event: ThreeEvent<MouseEvent>) => {
     event.stopPropagation()
     if (isPlaying) return
 
@@ -238,7 +238,7 @@ export function useSceneInteraction({
   }
 
   // Touch handlers for mobile
-  const handleTouchStart = (event: THREE.ThreeEvent<PointerEvent>) => {
+  const handleTouchStart = (event: ThreeEvent<PointerEvent>) => {
     if (isPlaying) return
 
     // Record the starting position for all modes
@@ -263,7 +263,7 @@ export function useSceneInteraction({
     }
   }
 
-  const handleTouchMove = (event: THREE.ThreeEvent<PointerEvent>) => {
+  const handleTouchMove = (event: ThreeEvent<PointerEvent>) => {
     if (isPlaying) return
 
     if (touchStartPosition) {
@@ -290,7 +290,7 @@ export function useSceneInteraction({
     }
   }
 
-  const handleTouchEnd = (event: THREE.ThreeEvent<PointerEvent>) => {
+  const handleTouchEnd = (event: ThreeEvent<PointerEvent>) => {
     if (isPlaying) return
 
     if (interactionMode === "build") {
